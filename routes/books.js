@@ -1,34 +1,18 @@
 const express = require('express')
 const router = express.Router()
-const multer = require('multer')
-const fs = require('fs')
-const path = require('path')
+
 const Book = require('./../models/book')
 const Author = require('./../models/author')
 
+const imageMimeTypes = ['image/jpeg','image/png','image/gif']
 
-const uploadPath = path.join('public',Book.coverImageBasePath)
-const imageMimeType = ['image/jpeg','image/png','image/gif']
-
-const upload = multer({
-    dest: uploadPath,
-    fileFilter:(req,file,callback)=>{
-        callback(null,imageMimeType.includes(file.mimetype))
-    } 
-})
-
-// var storage = multer.diskStorage({
-// 	destination: function (req, file, cb) {
-// 	  cb(null, uploadPath)
-// 	},
-// 	filename: function (req, file, cb) {
-// 	  cb(null, file.originalname);
-// 	},
+// const upload = multer({
+//     dest: uploadPath,
 //     fileFilter:(req,file,callback)=>{
 //         callback(null,imageMimeType.includes(file.mimetype))
 //     } 
-//   })
-// var upload = multer({storage:storage})
+// })
+
 
 //All Books route
 router.get('/',async (req,res)=>{
@@ -60,38 +44,27 @@ router.get('/new',async(req,res)=>{
 })
 
 
-router.post('/', upload.single('cover'), async (req, res) => {
-    const fileName = req.file != null ? req.file.filename : null
+router.post('/',  async (req, res) => {
     const book = new Book({
       title: req.body.title,
       author:req.body.Author.trim() ,
       publishDate: new Date(req.body.publishDate),
       pageCount: req.body.pageCount,
-      coverImageName: fileName,
       description: req.body.description
     }
 )
+saveCover(book,req.body.cover)
 try{
     const newbook = await book.save()
     //res.redirect(`/books/${newbook.id}`)
     res.redirect('/books')
 }
 catch(err){
-    console.log(err.message);
-    if(book.coverImageName !== null){
-        removeImageBookCover(book.coverImageName)
-    }
     renderNewPage(res,book,true)
 }
 })
 
-function removeImageBookCover(filename){
-    //Use unlink to delete file follow the link
-       fs.unlink(path.join(uploadPath,filename),(err)=>{
-           if(err) throw err;
-        //    console.log(`${path.join(uploadPath,filename)} was Deleted`)
-       })
-}
+
 async function renderNewPage(res, book , checkError = false){
     try{
         const authors = await Author.find()
@@ -105,6 +78,15 @@ async function renderNewPage(res, book , checkError = false){
     }
     catch{
         res.redirect('/books')
+    }
+}
+//Lưu hình ảnh của sách thông qua FileEncode của FIlePond, res.body.cover đã đc encode thoe chuẩn FileEncode
+function saveCover(book,coverEncoded){
+    if(coverEncoded == null ) return 
+    const cover = JSON.parse(coverEncoded)
+    if( cover != null && imageMimeTypes.includes(cover.type)){
+        book.coverImage = new Buffer.from(cover.data,'base64') 
+        book.coverImageType = cover.type
     }
 }
 module.exports = router
