@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const expressLayout = require('express-ejs-layouts')
 const mogoose = require('mongoose')
+const methodOverrride = require('method-override')
 const dotenv = require('dotenv')
 dotenv.config()
 
@@ -22,6 +23,7 @@ app.set('layout', 'layouts/layout')
 
 app.use(expressLayout)
 app.use(express.static('public'))
+app.use(methodOverrride('_method'))
 app.use(express.json())
 app.use(express.urlencoded({
     limit: '10mb',

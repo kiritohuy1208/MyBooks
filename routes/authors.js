@@ -1,6 +1,7 @@
 const express = require('express')
 const Author = require('./../models/author')
 const router = express.Router()
+const Book = require('./../models/book')
 //All authors route
 router.get('/',async (req,res)=>{
   
@@ -32,15 +33,73 @@ router.post('/', async (req,res)=>{
     })
     try{
         const newAuthor = await author.save()
-         res.redirect('authors')
+         res.redirect(`authors/${newAuthor.id}`)
     }
     catch{
         res.render('authors/new',{
             author:author,
             errorMessage: "Error creating Author"
         })
+    }     
+})
+router.get('/:id', async (req,res)=>{
+    try{
+        const author = await Author.findById(req.params.id)
+        const bookByAuthor = await Book.find({author:author.id}).limit(6).exec()
+        res.render('authors/show.ejs',{author: author, bookByAuthor: bookByAuthor})
     }
-  
+    catch(err){
+        console.log(err)
+        res.redirect('/')
+    }
+})
+router.get('/:id/edit', async (req,res)=>{
+    try{
+        const author = await Author.findById(req.params.id)
+        res.render('authors/edit',{author:author})
+    }
+    catch{
+        res.redirect('/authors')
+    }
+   
+})
+router.put('/:id', async (req,res)=>{
+    //  khai bao author ben ngoai nham su dung cho ham catch va type la let de thay doi content author
+   let author 
+    try{
+        author = await Author.findById(req.params.id)
+        author.name = req.body.name
+        await author.save()
+        res.redirect(`/authors/${author.id}`)
+    }
+    // do co the co loi hay lan : 1: tim kiem author loi 2: save author bi loi
+    catch{
+        // ham xu ly khi  tim kiem author loi:
+        if( author == null){
+            // redirect den trang chu
+            res.redirect('/')
+        }else{
+            res.render('authors/edit',{
+                author:author,
+                errorMessage: "Error updating Author"
+            })
+        }
        
+    }     
+})
+router.delete('/:id', async (req,res)=>{
+    let author
+    try{
+        author= await Author.findById(req.params.id)
+        await author.remove()
+        res.redirect('/authors')
+    }
+    catch{
+        if(author ==null){
+            res.redirect('/')
+        }else{
+            res.redirect(`/authors/${author.id}`)
+        }
+    }
 })
 module.exports = router
