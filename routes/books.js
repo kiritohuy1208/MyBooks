@@ -73,6 +73,7 @@ router.post('/',  async (req, res) => {
       description: req.body.description
     })
     saveCover(book,req.body.cover)
+   
 try{
     const newbook = await book.save()
     res.redirect(`/books/${newbook.id}`)
@@ -84,7 +85,7 @@ catch(err){
 })
 
 router.put('/:id',  async (req, res) => {
-   let books
+   let book
     try{
        book = await Book.findById(req.params.id)
        book.title = req.body.title
@@ -162,11 +163,15 @@ async function renderFormPage(res, book ,form, checkError = false){
 }
 //Lưu hình ảnh của sách thông qua FileEncode của FIlePond, res.body.cover đã đc encode thoe chuẩn FileEncode
 function saveCover(book,coverEncoded){
-    if(coverEncoded == null ) return 
-    const cover = JSON.parse(coverEncoded)
-    if( cover != null && imageMimeTypes.includes(cover.type)){
-        book.coverImage = new Buffer.from(cover.data,'base64') 
-        book.coverImageType = cover.type
+    if(coverEncoded == null ) {
+        return }
+    
+     const cover = JSON.parse(coverEncoded)
+        if( cover != null && imageMimeTypes.includes(cover.type)){
+            book.coverImage = new Buffer.from(cover.data,'base64') 
+            book.coverImageType = cover.type
+        
     }
+   
 }
 module.exports = router
