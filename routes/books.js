@@ -13,7 +13,6 @@ const imageMimeTypes = ['image/jpeg','image/png','image/gif']
 //     } 
 // })
 
-
 //All Books route
 router.get('/',async (req,res)=>{
 
@@ -42,8 +41,29 @@ router.get('/',async (req,res)=>{
 router.get('/new',async(req,res)=>{
     renderNewPage(res,new Book())
 })
-
-
+//get Detail book
+router.get('/:id',async (req,res)=>{
+    try{
+        const book = await Book.findById(req.params.id).populate('author').exec()
+      
+        res.render('books/show.ejs',{book:book})
+    }
+    catch(err){
+        console.log(err)
+        res.redirect('/')
+    }
+   
+})
+router.get('/:id/edit',async (req,res)=>{
+    try{
+        const book = await Book.findById(req.params.id)
+        renderEditPage(res,book)
+    }
+    catch{
+        res.redirect('/')
+    }
+   
+})
 router.post('/',  async (req, res) => {
     const book = new Book({
       title: req.body.title,
@@ -51,30 +71,90 @@ router.post('/',  async (req, res) => {
       publishDate: new Date(req.body.publishDate),
       pageCount: req.body.pageCount,
       description: req.body.description
-    }
-)
-saveCover(book,req.body.cover)
+    })
+    saveCover(book,req.body.cover)
 try{
     const newbook = await book.save()
-    //res.redirect(`/books/${newbook.id}`)
-    res.redirect('/books')
+    res.redirect(`/books/${newbook.id}`)
+    
 }
 catch(err){
     renderNewPage(res,book,true)
 }
 })
 
+router.put('/:id',  async (req, res) => {
+   let books
+    try{
+       book = await Book.findById(req.params.id)
+       book.title = req.body.title
+       book.author = req.body.Author.trim()
+       book.publishDate = new Date(req.body.publishDate) 
+       book.pageCount = req.body.pageCount
+       book.description = req.body.description
+        if(req.body.cover !=null && req.body.cover !==''){
+            saveCover(book,req.body.cover)
+        }
+        await book.save()
+        res.redirect(`/books/${book.id}`)   
+    }
+    catch(err){
+        console.log(err)
+        //Kiem tra loi nhung da tao book thanh cong=> loi do save len db
+        if( book != null){
+            renderEditPage(res,book,true)
+        }
+        // Loi do book= null 
+        else{ 
+            
+            redirect('/')
+        }
+       
+    }
+
+})
+
+router.delete('/id', async (req,res)=>{
+    let book 
+    try{
+        book= await Book.findById(req.params.id)
+        await book.remove()
+        res.redirect('/books')
+    }
+    catch{
+        if( book != null){
+            res.redirect('books/show',{book:book, errorMessage:" Could not remove book"})
+        }
+        else{
+            res.redirect('/')
+        }
+    }
+})
 
 async function renderNewPage(res, book , checkError = false){
+    renderFormPage(res,book,'new',checkError)
+}
+
+async function renderEditPage(res, book , checkError = false){
+   renderFormPage(res,book,'edit',checkError)
+}
+async function renderFormPage(res, book ,form, checkError = false){
     try{
         const authors = await Author.find()
         const params={
             authors: authors,
             book: book
         }
-        if(checkError) params.errorMessage = "Error creating book"
+        if(checkError){
+            if(form === 'edit'){
+                params.errorMessage = "Error updating book"
+            }
+            else{
+                params.errorMessage = "Error creating book"
+            }
+        }
 
-        res.render('books/new',params)
+        res.render(`books/${form}`,params)
     }
     catch{
         res.redirect('/books')

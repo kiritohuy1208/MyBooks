@@ -18,11 +18,16 @@
     <script defer src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
     <!-- Config js of person -->
     <script defer src="/javascripts/fileUpload.js"></script>
+    <link rel="stylesheet" href="/stylesheets/main.css">
     <title>Book eccommercy</title>
 </head>
 <body>
-    <%- include('../partials/header.ejs')%>
-    <%- include('../partials/errorMessage.ejs')%>
-    <%-body%>
+    <div class= "container">
+        <div class="inner-container">
+            <%- include('../partials/header.ejs')%>
+            <%- include('../partials/errorMessage.ejs')%>
+            <%-body%>
+        </div>
+    </div>
 </body>
 </html>
