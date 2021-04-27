@@ -1,8 +1,11 @@
 <h2 class="page-header"><%= book.title%></h2>
 <div class="book-details">
     <div>
-    <img src = "<%= book.coverImagePath%>" height="200" width="150"/>
-      
+      <!--  -->
+        <%for(i=0;i<book.arrayImage.length;i++){%>
+        <img src ="data:<%=book.arrayImage[i].coverImageType%>;charset=utf-8;base64,<%= book.arrayImage[i].coverImage.toString('base64')%>" height="200" width="150"/>
+        
+     <%}%>
     <div class="book-details-btn-grid">
         <a class="btn btn-primary" href="/books/<%= book.id %>/edit">Edit</a>
         <%- include('./../partials/deleteForm',{url:`/books/${book.id}`})%>

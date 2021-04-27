@@ -68,11 +68,18 @@
 }
 
 .filepond--panel-root {
-  background-color: var(--form-input-background-color);
-  border: 1px solid var(--form-input-border-color);
+  background-color: black;
+  /* border: 1px solid var(--form-input-border-color); */
+
+  
 }
 
 .filepond--drop-label {
   color: var(--color-text-light);
   font-size: inherit;
+}  
+.filepond{
+  height: 500px !important;
+  overflow-y: scroll;
+
 }

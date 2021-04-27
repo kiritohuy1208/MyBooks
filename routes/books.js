@@ -3,6 +3,7 @@ const router = express.Router()
 
 const Book = require('./../models/book')
 const Author = require('./../models/author')
+const { json } = require('express')
 
 const imageMimeTypes = ['image/jpeg','image/png','image/gif']
 
@@ -45,7 +46,6 @@ router.get('/new',async(req,res)=>{
 router.get('/:id',async (req,res)=>{
     try{
         const book = await Book.findById(req.params.id).populate('author').exec()
-      
         res.render('books/show.ejs',{book:book})
     }
     catch(err){
@@ -57,6 +57,7 @@ router.get('/:id',async (req,res)=>{
 router.get('/:id/edit',async (req,res)=>{
     try{
         const book = await Book.findById(req.params.id)
+        
         renderEditPage(res,book)
     }
     catch{
@@ -65,6 +66,16 @@ router.get('/:id/edit',async (req,res)=>{
    
 })
 router.post('/',  async (req, res) => {
+
+    var imagesarray = req.body.cover
+    let arr = []
+    var i=0
+    while(imagesarray[i] !== undefined){
+    var image= JSON.parse(imagesarray[i])
+    arr.unshift(image)
+    i++
+    }
+
     const book = new Book({
       title: req.body.title,
       author:req.body.Author.trim() ,
@@ -72,18 +83,23 @@ router.post('/',  async (req, res) => {
       pageCount: req.body.pageCount,
       description: req.body.description
     })
-    saveCover(book,req.body.cover)
-   
-try{
-    const newbook = await book.save()
-    res.redirect(`/books/${newbook.id}`)
-    
-}
-catch(err){
-    renderNewPage(res,book,true)
-}
-})
+    // Lưu 1 hình
+    // saveCover(book,req.body.cover)
 
+    // Lưu nhiều hình
+    saveArrayImage(book,arr,i)
+
+    try{
+        const newbook = await book.save()
+        res.redirect(`/books/${newbook.id}`)
+    }
+    catch(err){
+        console.log(err)
+        renderNewPage(res,book,true)
+        
+    }
+
+})
 router.put('/:id',  async (req, res) => {
    let book
     try{
@@ -115,14 +131,15 @@ router.put('/:id',  async (req, res) => {
 
 })
 
-router.delete('/id', async (req,res)=>{
+router.delete('/:id', async (req,res)=>{
     let book 
     try{
         book= await Book.findById(req.params.id)
         await book.remove()
         res.redirect('/books')
     }
-    catch{
+    catch(err){
+        console.log(err);
         if( book != null){
             res.redirect('books/show',{book:book, errorMessage:" Could not remove book"})
         }
@@ -168,10 +185,32 @@ function saveCover(book,coverEncoded){
     
      const cover = JSON.parse(coverEncoded)
         if( cover != null && imageMimeTypes.includes(cover.type)){
+            
             book.coverImage = new Buffer.from(cover.data,'base64') 
             book.coverImageType = cover.type
         
     }
    
+
 }
+async function saveArrayImage(book,arr,length){
+  
+    if(arr == null) return
+    for(i=0;i<length;i++ ){
+        if( arr[i] != null && imageMimeTypes.includes(arr[i].type)){
+            var image = {
+                coverImage:  new Buffer.from(arr[i].data,'base64') ,
+                coverImageType: arr[i].type
+            }
+           
+            book.arrayImage[i] = image
+           
+           
+    }
+           
+    }
+}
+//  <% book.arrayImage.forEach(img =>{%> 
+// data:<%= img.coverImageType%>;charset=utf-8;base64,<%= img.coverImage.toString('base64')%>
+//  <%})%>
 module.exports = router

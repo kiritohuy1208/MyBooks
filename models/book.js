@@ -25,21 +25,35 @@ const bookSchema = mongoose.Schema({
     },
     coverImage:{
         type: Buffer,
-        required: true
+        // required: true
     },
     coverImageType:{
         type: String,
-        required : true
+        // required : true
     },
     author:{
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'Author'
-    }
+    },
+    arrayImage:[
+        {
+            coverImage: Buffer,
+            coverImageType:{ type: String}
+        }
+    ]
+    // arrayImage:[Buffer]
 })
+// bookSchema.virtual('coverImagePath').get(function(){
+//     if (this.coverImage != null && this.coverImageType != null) {
+//         return `data:${this.coverImageType};charset=utf-8;base64,${this.coverImage.toString('base64')}`
+//     }
+// })
+
 bookSchema.virtual('coverImagePath').get(function(){
-    if (this.coverImage != null && this.coverImageType != null) {
-        return `data:${this.coverImageType};charset=utf-8;base64,${this.coverImage.toString('base64')}`
+
+    if (this.arrayImage[0].coverImage != null && this.arrayImage[0].coverImageType != null) {
+        return `data:${this.arrayImage[0].coverImageType};charset=utf-8;base64,${this.arrayImage[0].coverImage.toString('base64')}`
     }
 })
 module.exports = mongoose.model('Book',bookSchema)
